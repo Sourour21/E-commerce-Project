@@ -1,0 +1,144 @@
+﻿<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Application e-commerce sécurisée">
+    <title>SecureShop | E-Commerce</title>
+    <link rel="stylesheet" href="/styles.css">
+    <script src="/app.js" defer></script>
+</head>
+<body>
+    <header class="header">
+        <a href="/" class="logo">Secure<span>Shop</span></a>
+
+        <nav class="navigation">
+            <button id="catalog-nav" class="nav-link active">Catalogue</button>
+            <button id="orders-nav" class="nav-link hidden">Mes commandes</button>
+            <button id="admin-nav" class="nav-link hidden">Administration</button>
+        </nav>
+
+        <div class="header-actions">
+            <span id="user-info" class="user-info hidden"></span>
+            <button id="login-nav" class="btn btn-outline">Connexion</button>
+            <button id="logout-btn" class="btn btn-dark hidden">Déconnexion</button>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="hero">
+            <div>
+                <p class="eyebrow">COMMERCE EN LIGNE SÉCURISÉ</p>
+                <h1>Découvrez notre<br><span>catalogue de produits.</span></h1>
+                <p class="hero-description">
+                    Une expérience d'achat simple, rapide et sécurisée.
+                </p>
+                <button id="explore-btn" class="btn btn-primary">Explorer les produits</button>
+            </div>
+            <div class="hero-decoration">
+                <div class="hero-circle">S</div>
+                <span class="decoration-dot dot-one"></span>
+                <span class="decoration-dot dot-two"></span>
+            </div>
+        </section>
+
+        <section id="catalog-section" class="content-section">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">NOTRE SÉLECTION</p>
+                    <h2>Nos produits</h2>
+                </div>
+                <button id="refresh-products" class="btn btn-outline">Actualiser</button>
+            </div>
+            <p id="catalog-message" class="message" role="status"></p>
+            <div id="products-list" class="products-grid"></div>
+        </section>
+
+        <section id="auth-section" class="content-section auth-section hidden">
+            <div class="auth-card">
+                <p class="eyebrow">VOTRE ESPACE</p>
+                <h2 id="auth-title">Connexion</h2>
+                <p id="auth-description" class="muted">Connectez-vous à votre compte.</p>
+
+                <form id="auth-form">
+                    <div id="name-field" class="form-group hidden">
+                        <label for="full-name">Nom complet</label>
+                        <input id="full-name" name="full_name" type="text" minlength="2" maxlength="150">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Adresse e-mail</label>
+                        <input id="email" name="email" type="email" required autocomplete="email">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Mot de passe</label>
+                        <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password">
+                    </div>
+
+                    <button id="auth-submit" class="btn btn-primary btn-full" type="submit">Se connecter</button>
+                </form>
+
+                <p id="auth-message" class="message" role="status"></p>
+                <p class="auth-switch">
+                    <span id="auth-switch-text">Vous n'avez pas de compte ?</span>
+                    <button id="auth-switch-btn" class="text-button">Créer un compte</button>
+                </p>
+                <button id="back-catalog" class="text-button">Retour au catalogue</button>
+            </div>
+        </section>
+
+        <section id="orders-section" class="content-section hidden">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">VOTRE ACTIVITÉ</p>
+                    <h2>Mes commandes</h2>
+                </div>
+                <button id="refresh-orders" class="btn btn-outline">Actualiser</button>
+            </div>
+            <p id="orders-message" class="message" role="status"></p>
+            <div id="orders-list" class="orders-list"></div>
+        </section>
+
+        <section id="admin-section" class="content-section hidden">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">ESPACE ADMINISTRATEUR</p>
+                    <h2>Gestion des produits</h2>
+                </div>
+            </div>
+
+            <div class="admin-card">
+                <h3>Ajouter un produit</h3>
+                <form id="product-form">
+                    <div class="form-group">
+                        <label for="product-name">Nom du produit</label>
+                        <input id="product-name" required minlength="2" maxlength="150">
+                    </div>
+                    <div class="form-group">
+                        <label for="product-description">Description</label>
+                        <textarea id="product-description" maxlength="2000"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="product-price">Prix</label>
+                            <input id="product-price" type="number" min="0.01" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="product-stock">Stock</label>
+                            <input id="product-stock" type="number" min="0" step="1" value="0" required>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" type="submit">Ajouter le produit</button>
+                </form>
+                <p id="admin-message" class="message" role="status"></p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>SecureShop — Application E-Commerce sécurisée</p>
+        <p>Architecture basée sur des microservices et une API Gateway.</p>
+    </footer>
+</body>
+</html>
