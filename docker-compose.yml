@@ -25,6 +25,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: user_db
       DB_SSL: ${DB_SSL}
+      TRUST_CLIENT_IP_HEADER: ${TRUST_CLIENT_IP_HEADER:-false}
       JWT_SECRET: ${JWT_SECRET}
     restart: unless-stopped
 

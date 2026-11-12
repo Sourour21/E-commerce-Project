@@ -1,3 +1,5 @@
+import ipaddress
+import os
 import logging
 from contextlib import asynccontextmanager
 
@@ -11,6 +13,24 @@ from app.security import hash_password, verify_password, create_access_token
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("user-service")
+TRUST_CLIENT_IP_HEADER = (
+    os.getenv("TRUST_CLIENT_IP_HEADER", "false").lower() == "true"
+)
+
+
+def get_client_ip(request: Request) -> str:
+    if TRUST_CLIENT_IP_HEADER:
+        ip = request.headers.get("X-Client-IP")
+
+        if not ip:
+            return "unknown"
+
+        try:
+            return str(ipaddress.ip_address(ip.strip()))
+        except ValueError:
+            return "unknown"
+
+    return request.client.host if request.client else "unknown"
 
 
 @asynccontextmanager
@@ -42,7 +62,7 @@ def register(user: UserRegister, request: Request):
     email = str(user.email).lower()
     if not user.full_name.strip():
         raise HTTPException(status_code=400, detail="Full name cannot be empty")
-    ip = request.client.host if request.client else "unknown"
+    ip = get_client_ip(request)
 
     try:
         with get_connection() as connection:
@@ -74,7 +94,7 @@ def register(user: UserRegister, request: Request):
 @app.post("/users/login", response_model=LoginResponse)
 def login(credentials: UserLogin, request: Request):
     email = str(credentials.email).lower()
-    ip = request.client.host if request.client else "unknown"
+    ip = get_client_ip(request)
 
     with get_connection() as connection:
         row = connection.execute(
