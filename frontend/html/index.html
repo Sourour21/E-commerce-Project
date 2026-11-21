@@ -1,18 +1,28 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Application e-commerce sécurisée">
-    <title>SecureShop | E-Commerce</title>
+    <meta name="description" content="SecureShop, boutique en ligne sécurisée">
+    <meta name="theme-color" content="#1c58a6">
+    <title>SecureShop | Boutique en ligne</title>
+    <link rel="preload" href="/fonts/bricolage.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="/styles.css">
     <script src="/app.js" defer></script>
 </head>
 <body>
-    <header class="header">
-        <a href="/" class="logo">Secure<span>Shop</span></a>
+    <a class="skip-link" href="#catalog-section">Aller au catalogue</a>
 
-        <nav class="navigation">
+    <header class="header">
+        <a href="/" class="logo" aria-label="SecureShop, accueil">
+            <svg class="logo-mark" viewBox="0 0 32 32" aria-hidden="true">
+                <path d="M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7L16 2Z"/>
+                <path class="logo-tick" d="m10.5 16 4 4 7-8"/>
+            </svg>
+            <span>SecureShop</span>
+        </a>
+
+        <nav class="navigation" aria-label="Navigation principale">
             <button id="catalog-nav" class="nav-link active">Catalogue</button>
             <button id="orders-nav" class="nav-link hidden">Mes commandes</button>
             <button id="admin-nav" class="nav-link hidden">Administration</button>
@@ -20,91 +30,130 @@
 
         <div class="header-actions">
             <span id="user-info" class="user-info hidden"></span>
-            <button id="login-nav" class="btn btn-outline">Connexion</button>
-            <button id="logout-btn" class="btn btn-dark hidden">Déconnexion</button>
+            <button id="login-nav" class="btn btn-outline">Se connecter</button>
+            <button id="logout-btn" class="btn btn-ghost hidden">Se déconnecter</button>
         </div>
     </header>
 
-    <main class="container">
+    <main>
         <section class="hero">
-            <div>
-                <p class="eyebrow">COMMERCE EN LIGNE SÉCURISÉ</p>
-                <h1>Découvrez notre<br><span>catalogue de produits.</span></h1>
+            <div class="hero-text">
+                <h1>Vos achats, protégés de bout en bout.</h1>
                 <p class="hero-description">
-                    Une expérience d'achat simple, rapide et sécurisée.
+                    Parcourez le catalogue, commandez en quelques clics et suivez vos commandes.
+                    Chaque requête traverse quatre contrôles avant d'atteindre nos serveurs.
                 </p>
-                <button id="explore-btn" class="btn btn-primary">Explorer les produits</button>
+                <button id="explore-btn" class="btn btn-primary btn-large">Voir les produits</button>
             </div>
-            <div class="hero-decoration">
-                <div class="hero-circle">S</div>
-                <span class="decoration-dot dot-one"></span>
-                <span class="decoration-dot dot-two"></span>
-            </div>
+
+            <ol class="trust-path" aria-label="Parcours d'une requête">
+                <li>
+                    <span class="trust-step">1</span>
+                    <div>
+                        <strong>Connexion chiffrée</strong>
+                        <p>HTTPS obligatoire, de votre navigateur jusqu'à la base de données.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="trust-step">2</span>
+                    <div>
+                        <strong>Filtrage des attaques</strong>
+                        <p>Injections SQL, scripts et robots bloqués avant d'arriver au site.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="trust-step">3</span>
+                    <div>
+                        <strong>Accès contrôlé</strong>
+                        <p>Jeton de session vérifié à chaque commande et chaque modification.</p>
+                    </div>
+                </li>
+                <li>
+                    <span class="trust-step">4</span>
+                    <div>
+                        <strong>Surveillance continue</strong>
+                        <p>Toute anomalie déclenche une alerte et une réponse automatique.</p>
+                    </div>
+                </li>
+            </ol>
         </section>
 
         <section id="catalog-section" class="content-section">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow">NOTRE SÉLECTION</p>
-                    <h2>Nos produits</h2>
+                    <h2>Catalogue</h2>
+                    <p id="catalog-message" class="message" role="status"></p>
                 </div>
                 <button id="refresh-products" class="btn btn-outline">Actualiser</button>
             </div>
-            <p id="catalog-message" class="message" role="status"></p>
             <div id="products-list" class="products-grid"></div>
         </section>
 
         <section id="auth-section" class="content-section auth-section hidden">
-            <div class="auth-card">
-                <p class="eyebrow">VOTRE ESPACE</p>
-                <h2 id="auth-title">Connexion</h2>
-                <p id="auth-description" class="muted">Connectez-vous à votre compte.</p>
+            <div class="auth-layout">
+                <aside class="auth-aside">
+                    <svg class="auth-seal" viewBox="0 0 32 32" aria-hidden="true">
+                        <path d="M16 2 4 7v8c0 7.5 5.1 13.4 12 15 6.9-1.6 12-7.5 12-15V7L16 2Z"/>
+                        <path class="logo-tick" d="m10.5 16 4 4 7-8"/>
+                    </svg>
+                    <h3>Votre compte est protégé</h3>
+                    <ul>
+                        <li>Mot de passe stocké sous forme chiffrée, jamais en clair</li>
+                        <li>Session limitée dans le temps</li>
+                        <li>Tentatives répétées bloquées automatiquement</li>
+                    </ul>
+                </aside>
 
-                <form id="auth-form">
-                    <div id="name-field" class="form-group hidden">
-                        <label for="full-name">Nom complet</label>
-                        <input id="full-name" name="full_name" type="text" minlength="2" maxlength="150">
-                    </div>
+                <div class="auth-card">
+                    <h2 id="auth-title">Connexion</h2>
+                    <p id="auth-description" class="muted">Connectez-vous à votre compte.</p>
 
-                    <div class="form-group">
-                        <label for="email">Adresse e-mail</label>
-                        <input id="email" name="email" type="email" required autocomplete="email">
-                    </div>
+                    <form id="auth-form">
+                        <div id="name-field" class="form-group hidden">
+                            <label for="full-name">Nom complet</label>
+                            <input id="full-name" name="full_name" type="text" minlength="2" maxlength="150" autocomplete="name">
+                        </div>
 
-                    <div class="form-group">
-                        <label for="password">Mot de passe</label>
-                        <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password">
-                    </div>
+                        <div class="form-group">
+                            <label for="email">Adresse e-mail</label>
+                            <input id="email" name="email" type="email" required autocomplete="email">
+                        </div>
 
-                    <button id="auth-submit" class="btn btn-primary btn-full" type="submit">Se connecter</button>
-                </form>
+                        <div class="form-group">
+                            <label for="password">Mot de passe</label>
+                            <input id="password" name="password" type="password" required minlength="8" autocomplete="current-password">
+                            <small id="password-hint" class="field-hint hidden">8 caractères minimum.</small>
+                        </div>
 
-                <p id="auth-message" class="message" role="status"></p>
-                <p class="auth-switch">
-                    <span id="auth-switch-text">Vous n'avez pas de compte ?</span>
-                    <button id="auth-switch-btn" class="text-button">Créer un compte</button>
-                </p>
-                <button id="back-catalog" class="text-button">Retour au catalogue</button>
+                        <button id="auth-submit" class="btn btn-primary btn-full" type="submit">Se connecter</button>
+                    </form>
+
+                    <p id="auth-message" class="message" role="status"></p>
+                    <p class="auth-switch">
+                        <span id="auth-switch-text">Vous n'avez pas de compte ?</span>
+                        <button id="auth-switch-btn" class="text-button">Créer un compte</button>
+                    </p>
+                    <button id="back-catalog" class="text-button back-link">Retour au catalogue</button>
+                </div>
             </div>
         </section>
 
         <section id="orders-section" class="content-section hidden">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow">VOTRE ACTIVITÉ</p>
                     <h2>Mes commandes</h2>
+                    <p id="orders-message" class="message" role="status"></p>
                 </div>
                 <button id="refresh-orders" class="btn btn-outline">Actualiser</button>
             </div>
-            <p id="orders-message" class="message" role="status"></p>
             <div id="orders-list" class="orders-list"></div>
         </section>
 
         <section id="admin-section" class="content-section hidden">
             <div class="section-heading">
                 <div>
-                    <p class="eyebrow">ESPACE ADMINISTRATEUR</p>
                     <h2>Gestion des produits</h2>
+                    <p class="muted">Réservé aux administrateurs. Chaque ajout est journalisé.</p>
                 </div>
             </div>
 
@@ -117,11 +166,11 @@
                     </div>
                     <div class="form-group">
                         <label for="product-description">Description</label>
-                        <textarea id="product-description" maxlength="2000"></textarea>
+                        <textarea id="product-description" maxlength="2000" rows="3"></textarea>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="product-price">Prix</label>
+                            <label for="product-price">Prix (TND)</label>
                             <input id="product-price" type="number" min="0.01" step="0.01" required>
                         </div>
                         <div class="form-group">
@@ -136,9 +185,32 @@
         </section>
     </main>
 
+    <dialog id="order-dialog" class="order-dialog" aria-labelledby="order-dialog-title">
+        <form id="order-form" method="dialog">
+            <h3 id="order-dialog-title">Commander</h3>
+            <p id="order-dialog-product" class="order-dialog-product"></p>
+            <div class="form-group">
+                <label for="order-quantity">Quantité</label>
+                <div class="qty">
+                    <button type="button" id="qty-minus" class="qty-btn" aria-label="Diminuer la quantité">−</button>
+                    <input id="order-quantity" type="number" min="1" step="1" value="1" required>
+                    <button type="button" id="qty-plus" class="qty-btn" aria-label="Augmenter la quantité">+</button>
+                </div>
+            </div>
+            <p class="order-total">Total : <strong id="order-total"></strong></p>
+            <p id="order-message" class="message" role="status"></p>
+            <div class="dialog-actions">
+                <button type="button" id="order-cancel" class="btn btn-ghost">Annuler</button>
+                <button type="submit" id="order-confirm" class="btn btn-primary">Confirmer la commande</button>
+            </div>
+        </form>
+    </dialog>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
     <footer class="footer">
-        <p>SecureShop — Application E-Commerce sécurisée</p>
-        <p>Architecture basée sur des microservices et une API Gateway.</p>
+        <span>SecureShop</span>
+        <span>Projet « Sécurité dans les Clouds », hébergé sur AWS derrière Cloudflare</span>
     </footer>
 </body>
 </html>

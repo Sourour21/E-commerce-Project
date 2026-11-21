@@ -1,10 +1,34 @@
-﻿const API = "";
+const API = "";
 
 let currentUser = null;
 let currentToken = sessionStorage.getItem("access_token");
 let authMode = "login";
+let orderProduct = null;
+let toastTimer = null;
+const productNames = new Map();
 
 const $ = (id) => document.getElementById(id);
+
+const PRODUCT_COLORS = ["#1c58a6", "#1e7a4c", "#8a3b12", "#5b3e96", "#0f6e74", "#a1305e", "#3d4f6b"];
+
+function productColor(name) {
+    let hash = 0;
+    for (const char of name) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+    return PRODUCT_COLORS[hash % PRODUCT_COLORS.length];
+}
+
+function slugify(text) {
+    return text
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+function formatPrice(value) {
+    return Number(value).toLocaleString("fr-TN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 function setMessage(elementId, message, type = "") {
     const element = $(elementId);
@@ -53,6 +77,7 @@ function showSection(sectionId) {
 
     sections.forEach(id => $(id).classList.add("hidden"));
     $(sectionId).classList.remove("hidden");
+    document.querySelector(".hero").classList.toggle("hidden", sectionId !== "catalog-section");
 
     document.querySelectorAll(".nav-link").forEach(button => {
         button.classList.remove("active");
@@ -66,9 +91,7 @@ function showSection(sectionId) {
         $("admin-nav").classList.add("active");
     }
 
-    if (sectionId !== "auth-section") {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function updateNavigation() {
@@ -99,6 +122,7 @@ function openLogin() {
     $("name-field").classList.add("hidden");
     $("password").setAttribute("autocomplete", "current-password");
     $("password").minLength = 1;
+    $("password-hint").classList.add("hidden");
     $("auth-form").reset();
     setMessage("auth-message", "");
     showSection("auth-section");
@@ -114,6 +138,7 @@ function openRegister() {
     $("name-field").classList.remove("hidden");
     $("password").setAttribute("autocomplete", "new-password");
     $("password").minLength = 8;
+    $("password-hint").classList.remove("hidden");
     $("auth-form").reset();
     setMessage("auth-message", "");
     showSection("auth-section");
@@ -128,19 +153,58 @@ async function loadProducts() {
         const products = await apiRequest("/products");
 
         if (!products.length) {
-            setMessage("catalog-message", "Aucun produit disponible pour le moment.");
+            setMessage("catalog-message", "");
+            const empty = document.createElement("p");
+            empty.className = "empty-state";
+            empty.textContent = "Le catalogue est vide. Un administrateur peut ajouter des produits depuis l'onglet Administration.";
+            container.appendChild(empty);
             return;
         }
 
-        setMessage("catalog-message", `${products.length} produit(s) disponible(s).`);
+        setMessage(
+            "catalog-message",
+            products.length === 1 ? "1 produit disponible." : `${products.length} produits disponibles.`
+        );
 
         products.forEach(product => {
+            productNames.set(product.id, product.name);
+
             const card = document.createElement("article");
             card.className = "product-card";
 
-            const icon = document.createElement("div");
-            icon.className = "product-icon";
-            icon.textContent = "▣";
+            const visual = document.createElement("div");
+            visual.className = "product-visual";
+            visual.style.setProperty("--c", productColor(product.name));
+            const initial = document.createElement("span");
+            initial.className = "product-initial";
+            initial.textContent = product.name.trim().charAt(0).toUpperCase();
+
+            const photo = document.createElement("img");
+            photo.className = "product-photo";
+            photo.alt = product.name;
+            photo.loading = "lazy";
+            photo.decoding = "async";
+            photo.addEventListener("load", () => visual.classList.add("has-photo"));
+            photo.addEventListener("error", () => photo.remove());
+            photo.src = `/images/${slugify(product.name)}.jpg`;
+
+            visual.append(initial, photo);
+
+            const badge = document.createElement("span");
+            badge.className = "stock-badge";
+            if (product.stock <= 0) {
+                badge.classList.add("out");
+                badge.textContent = "Épuisé";
+            } else if (product.stock <= 5) {
+                badge.classList.add("low");
+                badge.textContent = `Plus que ${product.stock}`;
+            } else {
+                badge.textContent = `En stock (${product.stock})`;
+            }
+            visual.appendChild(badge);
+
+            const body = document.createElement("div");
+            body.className = "product-body";
 
             const name = document.createElement("h3");
             name.textContent = product.name;
@@ -149,24 +213,28 @@ async function loadProducts() {
             description.className = "product-description";
             description.textContent = product.description || "Aucune description.";
 
+            const footer = document.createElement("div");
+            footer.className = "product-footer";
+
             const price = document.createElement("div");
             price.className = "product-price";
-            price.textContent = `${Number(product.price).toFixed(2)} TND`;
-
-            const stock = document.createElement("p");
-            stock.className = "product-stock";
-            stock.textContent = `Stock : ${product.stock}`;
+            price.textContent = formatPrice(product.price);
+            const currency = document.createElement("small");
+            currency.textContent = "TND";
+            price.appendChild(currency);
 
             const orderButton = document.createElement("button");
             orderButton.className = "btn btn-primary";
-            orderButton.textContent = "Commander";
+            orderButton.textContent = product.stock > 0 ? "Commander" : "Indisponible";
             orderButton.disabled = product.stock <= 0;
 
             orderButton.addEventListener("click", () => {
-                placeOrder(product.id);
+                placeOrder(product);
             });
 
-            card.append(icon, name, description, price, stock, orderButton);
+            footer.append(price, orderButton);
+            body.append(name, description, footer);
+            card.append(visual, body);
             container.appendChild(card);
         });
     } catch (error) {
@@ -174,38 +242,76 @@ async function loadProducts() {
     }
 }
 
-async function placeOrder(productId) {
+function placeOrder(product) {
     if (!currentToken) {
         openLogin();
         setMessage("auth-message", "Connectez-vous pour passer une commande.");
         return;
     }
 
-    const quantityText = window.prompt("Quelle quantité souhaitez-vous commander ?", "1");
+    orderProduct = product;
+    const max = Math.min(product.stock, 1000);
+    $("order-dialog-title").textContent = `Commander ${product.name}`;
+    $("order-dialog-product").textContent =
+        `${formatPrice(product.price)} TND l'unité, ${product.stock} en stock.`;
+    $("order-quantity").value = 1;
+    $("order-quantity").max = max;
+    setMessage("order-message", "");
+    updateOrderTotal();
+    $("order-dialog").showModal();
+}
 
-    if (quantityText === null) return;
+function updateOrderTotal() {
+    if (!orderProduct) return;
+    const quantity = Number($("order-quantity").value) || 0;
+    $("order-total").textContent = `${formatPrice(quantity * Number(orderProduct.price))} TND`;
+}
 
-    const quantity = Number(quantityText);
+function changeQuantity(delta) {
+    const input = $("order-quantity");
+    const max = Number(input.max) || 1000;
+    const next = Math.min(Math.max((Number(input.value) || 1) + delta, 1), max);
+    input.value = next;
+    updateOrderTotal();
+}
 
-    if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 1000) {
-        window.alert("Veuillez saisir une quantité entière valide.");
+async function confirmOrder(event) {
+    event.preventDefault();
+    const quantity = Number($("order-quantity").value);
+    const max = Number($("order-quantity").max) || 1000;
+
+    if (!Number.isInteger(quantity) || quantity <= 0 || quantity > max) {
+        setMessage("order-message", `Choisissez une quantité entière entre 1 et ${max}.`, "error");
         return;
     }
+
+    $("order-confirm").disabled = true;
 
     try {
         const order = await apiRequest("/orders", {
             method: "POST",
             body: JSON.stringify({
-                product_id: productId,
+                product_id: orderProduct.id,
                 quantity
             })
         });
 
-        window.alert(`Commande #${order.id} créée avec succès !`);
+        $("order-dialog").close();
+        showToast(`Commande n° ${order.id} confirmée.`, "success");
         loadProducts();
     } catch (error) {
-        window.alert(error.message);
+        setMessage("order-message", error.message, "error");
+    } finally {
+        $("order-confirm").disabled = false;
     }
+}
+
+function showToast(message, type = "") {
+    const toast = $("toast");
+    toast.textContent = message;
+    toast.className = `toast show ${type}`;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove("show"), 4000);
 }
 
 async function loadOrders() {
@@ -221,7 +327,7 @@ async function loadOrders() {
             return;
         }
 
-        setMessage("orders-message", `${orders.length} commande(s).`);
+        setMessage("orders-message", orders.length === 1 ? "1 commande." : `${orders.length} commandes.`);
 
         orders.forEach(order => {
             const card = document.createElement("article");
@@ -230,14 +336,14 @@ async function loadOrders() {
             const details = document.createElement("div");
 
             const title = document.createElement("h3");
-            title.textContent = `Commande #${order.id}`;
+            title.textContent = `Commande n° ${order.id}`;
 
             const description = document.createElement("p");
-            description.textContent =
-                `Produit #${order.product_id} · Quantité : ${order.quantity}`;
+            const productName = productNames.get(order.product_id) || `Produit n° ${order.product_id}`;
+            description.textContent = `${productName}, quantité ${order.quantity}`;
 
             const total = document.createElement("strong");
-            total.textContent = `${Number(order.total_price).toFixed(2)} TND`;
+            total.textContent = `${formatPrice(order.total_price)} TND`;
 
             details.append(title, description, total);
 
@@ -270,7 +376,8 @@ async function createProduct(event) {
         });
 
         $("product-form").reset();
-        setMessage("admin-message", "Produit ajouté avec succès.", "success");
+        setMessage("admin-message", "");
+        showToast("Produit ajouté au catalogue.", "success");
         loadProducts();
     } catch (error) {
         setMessage("admin-message", error.message, "error");
@@ -409,6 +516,12 @@ $("product-form").addEventListener("submit", createProduct);
 $("explore-btn").addEventListener("click", () => {
     $("catalog-section").scrollIntoView({ behavior: "smooth" });
 });
+
+$("order-form").addEventListener("submit", confirmOrder);
+$("order-cancel").addEventListener("click", () => $("order-dialog").close());
+$("qty-minus").addEventListener("click", () => changeQuantity(-1));
+$("qty-plus").addEventListener("click", () => changeQuantity(1));
+$("order-quantity").addEventListener("input", updateOrderTotal);
 
 restoreSession();
 updateNavigation();
